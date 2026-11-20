@@ -235,7 +235,7 @@ fun DynTab(modifier: Modifier) {
 @Composable
 fun EqScreen(onStart: () -> Unit) {
     var tab by remember { mutableStateOf(0) }
-    MaterialTheme(colorScheme = darkColorScheme(primary = Ink.Accent, onPrimary = Ink.OnAccent, background = Ink.Bg, onBackground = Ink.Text, surface = Ink.Surface, onSurface = Ink.Text)) {
+    OpenEqTheme {
         Column(
             Modifier.fillMaxSize().background(Ink.Bg).statusBarsPadding().navigationBarsPadding().padding(12.dp)
         ) {
