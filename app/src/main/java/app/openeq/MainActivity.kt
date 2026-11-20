@@ -192,76 +192,6 @@ fun Pill(text: String, on: Boolean, modifier: Modifier = Modifier, onClick: () -
 }
 
 @Composable
-fun EqTab(modifier: Modifier, onStart: () -> Unit) {
-    Column(modifier) {
-        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
-            Box(
-                Modifier.width(70.dp).fillMaxHeight().clip(RoundedCornerShape(28.dp))
-                    .background(PANEL).padding(vertical = 6.dp)
-            ) {
-                BandCol("Preamp", EqEngine.preamp, 70) { EqEngine.updatePreamp(it) }
-            }
-            Spacer(Modifier.width(6.dp))
-            EqEngine.LABELS.forEachIndexed { i, l ->
-                BandCol(l, EqEngine.gains[i], 54) { EqEngine.setGain(i, it) }
-            }
-        }
-        Canvas(
-            Modifier.padding(vertical = 10.dp).fillMaxWidth().height(72.dp)
-                .clip(RoundedCornerShape(16.dp)).background(PANEL)
-        ) {
-            val w = size.width
-            val h = size.height
-            fun yy(v: Float) = h / 2 - v / 12f * (h / 2 - 8.dp.toPx())
-            fun xx(i: Int) = w * i / 9f
-            drawLine(TRACK, Offset(0f, h / 2), Offset(w, h / 2), 1.dp.toPx())
-            val path = Path()
-            path.moveTo(xx(0), yy(EqEngine.eff(0)))
-            for (i in 1 until 10) {
-                val mx = (xx(i - 1) + xx(i)) / 2
-                path.cubicTo(mx, yy(EqEngine.eff(i - 1)), mx, yy(EqEngine.eff(i)), xx(i), yy(EqEngine.eff(i)))
-            }
-            drawPath(path, GREEN, style = Stroke(3.dp.toPx(), cap = StrokeCap.Round))
-        }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(52.dp).clip(CircleShape)
-                    .background(if (EqEngine.enabled) TEAL else PANEL)
-                    .border(1.dp, TEAL, CircleShape)
-                    .clickable { EqEngine.toggle(); if (EqEngine.enabled) onStart() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(if (EqEngine.enabled) "ON" else "OFF", color = TXT, fontWeight = FontWeight.Bold)
-            }
-            Spacer(Modifier.width(12.dp))
-            OutputPill()
-            Spacer(Modifier.width(8.dp))
-            var open by remember { mutableStateOf(false) }
-            Box(Modifier.weight(1f)) {
-                Box(
-                    Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp))
-                        .border(1.dp, TEAL, RoundedCornerShape(26.dp))
-                        .clickable { open = true },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(EqEngine.preset, color = TXT, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                }
-                DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                    EqEngine.names().forEach { n ->
-                        DropdownMenuItem(text = { Text(n) }, onClick = { EqEngine.select(n); open = false })
-                    }
-                    DropdownMenuItem(text = { Text("+ New preset") }, onClick = { EqEngine.newPreset(); open = false })
-                }
-            }
-        }
-        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            PKnob("Bass", EqEngine.bass, -100f, 100f, "%", 0) { EqEngine.bass = Math.round(it).toFloat(); EqEngine.changed() }
-            PKnob("Treble", EqEngine.treble, -100f, 100f, "%", 0) { EqEngine.treble = Math.round(it).toFloat(); EqEngine.changed() }
-        }
-    }
-}
-
-@Composable
 fun DynTab(modifier: Modifier) {
     val ctx = LocalContext.current
     val am = remember { ctx.getSystemService(AudioManager::class.java) }
@@ -305,16 +235,16 @@ fun DynTab(modifier: Modifier) {
 @Composable
 fun EqScreen(onStart: () -> Unit) {
     var tab by remember { mutableStateOf(0) }
-    MaterialTheme(colorScheme = darkColorScheme()) {
+    MaterialTheme(colorScheme = darkColorScheme(primary = Ink.Accent, onPrimary = Ink.OnAccent, background = Ink.Bg, onBackground = Ink.Text, surface = Ink.Surface, onSurface = Ink.Text)) {
         Column(
-            Modifier.fillMaxSize().background(BG).statusBarsPadding().navigationBarsPadding().padding(12.dp)
+            Modifier.fillMaxSize().background(Ink.Bg).statusBarsPadding().navigationBarsPadding().padding(12.dp)
         ) {
             when (tab) { 0 -> EqTab(Modifier.weight(1f), onStart); 1 -> DynTab(Modifier.weight(1f)); 2 -> PlayerTab(Modifier.weight(1f)); else -> PeqTab(Modifier.weight(1f)) }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Pill("Equalizer", tab == 0, Modifier.weight(1f)) { tab = 0 }
-                Pill("Dynamics", tab == 1, Modifier.weight(1f)) { tab = 1 }
-                Pill("Player", tab == 2, Modifier.weight(1f)) { tab = 2 }
-                Pill(androidx.compose.ui.res.stringResource(R.string.b6_tab_param), tab == 3, Modifier.weight(1f)) { tab = 3 }
+                InkPill("Equalizer", tab == 0, Modifier.weight(1f)) { tab = 0 }
+                InkPill("Dynamics", tab == 1, Modifier.weight(1f)) { tab = 1 }
+                InkPill("Player", tab == 2, Modifier.weight(1f)) { tab = 2 }
+                InkPill(androidx.compose.ui.res.stringResource(R.string.b6_tab_param), tab == 3, Modifier.weight(1f)) { tab = 3 }
             }
         }
     }
