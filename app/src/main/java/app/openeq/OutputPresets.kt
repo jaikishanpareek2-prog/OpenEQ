@@ -112,7 +112,7 @@ fun OutputPill() {
         "wired" -> c.getString(R.string.b5_out_wired)
         else -> c.getString(R.string.b5_out_speaker)
     }
-    InkPill(name, OutputPresets.enabled, Modifier.width(96.dp)) {
+    InkToggle(name, OutputPresets.enabled, Modifier.width(96.dp)) {
         OutputPresets.toggle()
         Toast.makeText(
             c,

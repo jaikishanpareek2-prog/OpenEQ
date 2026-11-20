@@ -118,33 +118,13 @@ fun EqTab(modifier: Modifier, onStart: () -> Unit) {
             drawPath(path, Ink.Accent, style = Stroke(3.dp.toPx(), cap = StrokeCap.Round))
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(52.dp).clip(CircleShape)
-                    .background(if (EqEngine.enabled) Ink.Accent else Ink.Surface)
-                    .border(1.dp, if (EqEngine.enabled) Ink.Accent else Ink.Track, CircleShape)
-                    .clickable { EqEngine.toggle(); if (EqEngine.enabled) onStart() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    if (EqEngine.enabled) "ON" else "OFF",
-                    color = if (EqEngine.enabled) Ink.OnAccent else Ink.Text,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            InkOnButton(EqEngine.enabled) { EqEngine.toggle(); if (EqEngine.enabled) onStart() }
             Spacer(Modifier.width(12.dp))
             OutputPill()
             Spacer(Modifier.width(8.dp))
             var open by remember { mutableStateOf(false) }
             Box(Modifier.weight(1f)) {
-                Box(
-                    Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp))
-                        .background(Ink.Surface)
-                        .border(1.dp, Ink.AccentSoft, RoundedCornerShape(26.dp))
-                        .clickable { open = true },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(EqEngine.preset, color = Ink.Text, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                }
+                InkPresetButton(EqEngine.preset, open, Modifier.fillMaxWidth()) { open = it }
                 DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
                     EqEngine.names().forEach { n ->
                         DropdownMenuItem(text = { Text(n) }, onClick = { EqEngine.select(n); open = false })

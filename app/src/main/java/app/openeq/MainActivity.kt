@@ -241,10 +241,7 @@ fun EqScreen(onStart: () -> Unit) {
         ) {
             when (tab) { 0 -> EqTab(Modifier.weight(1f), onStart); 1 -> DynTab(Modifier.weight(1f)); 2 -> PlayerTab(Modifier.weight(1f)); else -> PeqTab(Modifier.weight(1f)) }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                InkPill("Equalizer", tab == 0, Modifier.weight(1f)) { tab = 0 }
-                InkPill("Dynamics", tab == 1, Modifier.weight(1f)) { tab = 1 }
-                InkPill("Player", tab == 2, Modifier.weight(1f)) { tab = 2 }
-                InkPill(androidx.compose.ui.res.stringResource(R.string.b6_tab_param), tab == 3, Modifier.weight(1f)) { tab = 3 }
+                InkConnectedTabs(listOf("Equalizer", "Dynamics", "Player", androidx.compose.ui.res.stringResource(R.string.b6_tab_param)), tab, Modifier.weight(1f)) { tab = it }
             }
         }
     }
