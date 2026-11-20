@@ -23,8 +23,8 @@ if [ "$(echo "$J" | jq -r '.workflow_runs[0].conclusion')" = "success" ]; then
     sleep 5
   done
   [ -z "$U" ] && { echo "Build passed but the APK link is not ready. Run ship.sh again."; exit 1; }
-  curl -sL -H "$A" "$U" -o /tmp/a.zip
-  rm -rf ~/openeq/out; unzip -oq /tmp/a.zip -d ~/openeq/out
+  curl -sL -H "$A" "$U" -o $HOME/.tmpeq/a.zip
+  rm -rf ~/openeq/out; unzip -oq $HOME/.tmpeq/a.zip -d ~/openeq/out
   if cp ~/openeq/out/*.apk ~/OpenEQ.apk 2>/dev/null; then
     cp ~/OpenEQ.apk ~/storage/downloads/ 2>/dev/null
     echo "Done! APK saved as ~/OpenEQ.apk"
@@ -32,7 +32,7 @@ if [ "$(echo "$J" | jq -r '.workflow_runs[0].conclusion')" = "success" ]; then
     echo "APK file not found in the download."
   fi
 else
-  curl -sL -H "$A" https://api.github.com/repos/$R/actions/runs/$ID/logs -o /tmp/l.zip
-  rm -rf /tmp/l; unzip -oq /tmp/l.zip -d /tmp/l
-  grep -rhE "e: file|error:|What went wrong" -A2 /tmp/l | head -40
+  curl -sL -H "$A" https://api.github.com/repos/$R/actions/runs/$ID/logs -o $HOME/.tmpeq/l.zip
+  rm -rf $HOME/.tmpeq/l; unzip -oq $HOME/.tmpeq/l.zip -d $HOME/.tmpeq/l
+  grep -rhE "e: file|error:|What went wrong" -A2 $HOME/.tmpeq/l | head -40
 fi
