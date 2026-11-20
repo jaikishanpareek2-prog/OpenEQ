@@ -1,12 +1,8 @@
 package app.openeq
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,20 +13,27 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -42,10 +45,32 @@ object Ink {
     val SurfaceHigh = Color(0xFF211E2E)
     val Accent = Color(0xFFA98BFF)
     val AccentSoft = Color(0xFF4A3D7A)
+    val AccentDeep = Color(0xFF6B4FD8)
+    val AccentLight = Color(0xFFDCD0FF)
     val OnAccent = Color(0xFF1B0F40)
     val Text = Color(0xFFEDE8FF)
     val TextDim = Color(0xFF9A93B8)
     val Track = Color(0xFF2B2740)
+    val Edge = Color(0xFF3A3552)
+    val PanelTop = Color(0xFF1D1A29)
+    val PanelBottom = Color(0xFF0E0D14)
+}
+
+fun Modifier.inkPanel(shape: Shape): Modifier = this
+    .clip(shape)
+    .background(Brush.verticalGradient(listOf(Ink.PanelTop, Ink.PanelBottom)))
+    .border(1.dp, Brush.verticalGradient(listOf(Ink.Edge, Ink.Track.copy(alpha = 0.35f))), shape)
+
+private fun DrawScope.glowRound(x: Float, y: Float, w: Float, h: Float, rad: Float, c: Color, a: Float) {
+    for (k in 3 downTo 1) {
+        val e = k * 2.5.dp.toPx()
+        drawRoundRect(
+            c.copy(alpha = (0.07f * a * (4 - k)).coerceIn(0f, 1f)),
+            Offset(x - e, y - e),
+            Size(w + 2 * e, h + 2 * e),
+            CornerRadius(rad + e)
+        )
+    }
 }
 
 @Composable
@@ -98,38 +123,63 @@ fun InkSlider(value: Float, min: Float, max: Float, onChange: (Float) -> Unit, m
         val pad = 30.dp.toPx()
         val cx = size.width / 2
         fun y(v: Float) = pad + (max - v) / (max - min) * (size.height - 2 * pad)
-        val tw = (14f + 4f * press).dp.toPx()
+        val tw = (14f + 3f * press).dp.toPx()
         val x0 = cx - tw / 2
         val r = CornerRadius(tw / 2)
-        val hh = (6f - 3f * press).dp.toPx()
-        val hw = (34f + 6f * press).dp.toPx()
+        val hh = (9f - 3f * press).dp.toPx()
+        val hw = (36f + 6f * press).dp.toPx()
         val half = hh / 2 + 5.dp.toPx()
         val yv = y(value)
         val y0 = y(0f)
-        val topEnd = (yv - half).coerceAtLeast(0f)
-        if (topEnd > 0f) drawRoundRect(Ink.Track, Offset(x0, 0f), Size(tw, topEnd), r)
-        val botStart = (yv + half).coerceAtMost(size.height)
-        if (botStart < size.height) drawRoundRect(Ink.Track, Offset(x0, botStart), Size(tw, size.height - botStart), r)
-        if (value > 0f) {
-            val s = yv + half
-            if (y0 > s) drawRoundRect(Ink.Accent, Offset(x0, s), Size(tw, y0 - s), r)
-        } else if (value < 0f) {
-            val e = yv - half
-            if (e > y0) drawRoundRect(Ink.Accent, Offset(x0, y0), Size(tw, e - y0), r)
-        }
         val tick = 5.dp.toPx()
-        val tg = 2.dp.toPx()
+        val tg = 3.dp.toPx()
         drawLine(Ink.TextDim, Offset(x0 - tg - tick, y0), Offset(x0 - tg, y0), 2.dp.toPx(), StrokeCap.Round)
         drawLine(Ink.TextDim, Offset(x0 + tw + tg, y0), Offset(x0 + tw + tg + tick, y0), 2.dp.toPx(), StrokeCap.Round)
-        drawRoundRect(Ink.Accent, Offset(cx - hw / 2, yv - hh / 2), Size(hw, hh), CornerRadius(hh / 2))
+        val groove = Brush.horizontalGradient(
+            listOf(Color(0xFF171523), Ink.Track, Color(0xFF171523)),
+            startX = x0,
+            endX = x0 + tw
+        )
+        val topEnd = (yv - half).coerceAtLeast(0f)
+        if (topEnd > 0f) drawRoundRect(groove, Offset(x0, 0f), Size(tw, topEnd), r)
+        val botStart = (yv + half).coerceAtMost(size.height)
+        if (botStart < size.height) drawRoundRect(groove, Offset(x0, botStart), Size(tw, size.height - botStart), r)
+        if (value > 0f) {
+            val s = yv + half
+            if (y0 > s) {
+                glowRound(x0, s, tw, y0 - s, tw / 2, Ink.Accent, 1f + press)
+                drawRoundRect(
+                    Brush.verticalGradient(listOf(Ink.Accent, Ink.AccentDeep), startY = s, endY = y0),
+                    Offset(x0, s), Size(tw, y0 - s), r
+                )
+            }
+        } else if (value < 0f) {
+            val e = yv - half
+            if (e > y0) {
+                glowRound(x0, y0, tw, e - y0, tw / 2, Ink.Accent, 1f + press)
+                drawRoundRect(
+                    Brush.verticalGradient(listOf(Ink.AccentDeep, Ink.Accent), startY = y0, endY = e),
+                    Offset(x0, y0), Size(tw, e - y0), r
+                )
+            }
+        }
+        glowRound(cx - hw / 2, yv - hh / 2, hw, hh, hh / 2, Ink.Accent, 1f + press)
+        drawRoundRect(
+            Brush.verticalGradient(listOf(Ink.AccentLight, Ink.Accent), startY = yv - hh / 2, endY = yv + hh / 2),
+            Offset(cx - hw / 2, yv - hh / 2), Size(hw, hh), CornerRadius(hh / 2)
+        )
     }
 }
 
 @Composable
-fun InkBandCol(label: String, value: Float, width: Int, onChange: (Float) -> Unit) {
-    Column(Modifier.width(width.dp).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+fun InkBandCol(label: String, value: Float, width: Int, panel: Boolean = true, onChange: (Float) -> Unit) {
+    val base = Modifier.width(width.dp).fillMaxHeight()
+    Column(
+        (if (panel) base.padding(horizontal = 2.dp).inkPanel(RoundedCornerShape(26.dp)) else base).padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         InkSlider(value, -12f, 12f, onChange, Modifier.weight(1f).fillMaxWidth())
         Text(label, color = Ink.Text, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-        Text("%.1f".format(value), color = Ink.TextDim, fontSize = 13.sp)
+        Text("%.1f".format(value), color = if (value != 0f) Ink.Accent else Ink.TextDim, fontSize = 13.sp)
     }
 }
