@@ -4,6 +4,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <application
         android:label="OpenEQ"
         android:allowBackup="true"
@@ -24,9 +27,7 @@
                 <action android:name="android.media.action.CLOSE_AUDIO_EFFECT_CONTROL_SESSION"/>
             </intent-filter>
         </receiver>
-        <service
-            android:name=".EqService"
-            android:exported="false"
-            android:foregroundServiceType="mediaPlayback"/>
+        <service android:name=".EqService" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
+        <service android:name=".PlayerService" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
     </application>
 </manifest>

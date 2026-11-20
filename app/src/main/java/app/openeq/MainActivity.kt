@@ -74,6 +74,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         EqEngine.init(this)
+        Player.init(this)
         if (Build.VERSION.SDK_INT >= 33) {
             registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
                 .launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -306,10 +307,11 @@ fun EqScreen(onStart: () -> Unit) {
         Column(
             Modifier.fillMaxSize().background(BG).statusBarsPadding().navigationBarsPadding().padding(12.dp)
         ) {
-            if (tab == 0) EqTab(Modifier.weight(1f), onStart) else DynTab(Modifier.weight(1f))
+            when (tab) { 0 -> EqTab(Modifier.weight(1f), onStart); 1 -> DynTab(Modifier.weight(1f)); else -> PlayerTab(Modifier.weight(1f)) }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Pill("Equalizer", tab == 0, Modifier.weight(1f)) { tab = 0 }
                 Pill("Dynamics", tab == 1, Modifier.weight(1f)) { tab = 1 }
+                Pill("Player", tab == 2, Modifier.weight(1f)) { tab = 2 }
             }
         }
     }
