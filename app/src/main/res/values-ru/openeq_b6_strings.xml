@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="b6_tab_param">Парам</string>
+    <string name="b6_peq_intro">Параметрический эквалайзер позволяет задать частоту, усиление и ширину каждой полосы. Создайте новый параметрический пресет или импортируйте файл AutoEq.</string>
+    <string name="b6_start">Создать параметрический пресет</string>
+    <string name="b6_hint_drag">Перетаскивайте точки, чтобы менять частоту и усиление.</string>
+    <string name="b6_type_peak">Пик</string>
+    <string name="b6_type_low">НЧ полка</string>
+    <string name="b6_type_high">ВЧ полка</string>
+    <string name="b6_freq">Частота</string>
+    <string name="b6_gain">Усиление</string>
+    <string name="b6_q">Q</string>
+    <string name="b6_hz">Гц</string>
+    <string name="b6_khz">кГц</string>
+    <string name="b6_db">дБ</string>
+    <string name="b6_add">+ Полоса</string>
+    <string name="b6_remove">Удалить полосу</string>
+    <string name="b6_imp_file">Импорт файла</string>
+    <string name="b6_imp_paste">Вставить AutoEq</string>
+    <string name="b6_imp_hint">AutoEq: скопируйте текст ParametricEQ и нажмите «Вставить» или выберите файл .txt.</string>
+    <string name="b6_imp_ok">Импортировано фильтров: %1$d, предусиление %2$.1f дБ</string>
+    <string name="b6_imp_none">Поддерживаемые фильтры не найдены</string>
+    <string name="b6_imp_skip">Пропущено неподдерживаемых фильтров: %1$d</string>
+    <string name="b6_imp_cap">Использованы только первые 16 фильтров</string>
+    <string name="b6_unsupported">Этот телефон поддерживает только 10 полос, поэтому кривая приближена.</string>
+</resources>

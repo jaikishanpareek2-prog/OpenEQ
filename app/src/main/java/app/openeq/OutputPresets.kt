@@ -79,8 +79,8 @@ object OutputPresets {
         val shared = map.any { it.key != current && it.value == EqEngine.preset }
         if (shared && !EqEngine.BUILTIN.containsKey(EqEngine.preset)) {
             val n = editName()
-            EqEngine.userPresets[n] = EqEngine.gains.toList()
-            EqEngine.select(n)
+            val m = EqEngine.cloneCurrentAs(n)
+            EqEngine.select(m)
         } else {
             keep()
         }

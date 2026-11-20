@@ -309,11 +309,12 @@ fun EqScreen(onStart: () -> Unit) {
         Column(
             Modifier.fillMaxSize().background(BG).statusBarsPadding().navigationBarsPadding().padding(12.dp)
         ) {
-            when (tab) { 0 -> EqTab(Modifier.weight(1f), onStart); 1 -> DynTab(Modifier.weight(1f)); else -> PlayerTab(Modifier.weight(1f)) }
+            when (tab) { 0 -> EqTab(Modifier.weight(1f), onStart); 1 -> DynTab(Modifier.weight(1f)); 2 -> PlayerTab(Modifier.weight(1f)); else -> PeqTab(Modifier.weight(1f)) }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Pill("Equalizer", tab == 0, Modifier.weight(1f)) { tab = 0 }
                 Pill("Dynamics", tab == 1, Modifier.weight(1f)) { tab = 1 }
                 Pill("Player", tab == 2, Modifier.weight(1f)) { tab = 2 }
+                Pill(androidx.compose.ui.res.stringResource(R.string.b6_tab_param), tab == 3, Modifier.weight(1f)) { tab = 3 }
             }
         }
     }

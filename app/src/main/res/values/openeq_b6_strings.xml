@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="b6_tab_param">Param</string>
+    <string name="b6_peq_intro">Parametric EQ lets you set the frequency, gain and width of each band. Start a new parametric preset, or import an AutoEq file.</string>
+    <string name="b6_start">Start parametric preset</string>
+    <string name="b6_hint_drag">Drag the dots to change frequency and gain.</string>
+    <string name="b6_type_peak">Peak</string>
+    <string name="b6_type_low">Low shelf</string>
+    <string name="b6_type_high">High shelf</string>
+    <string name="b6_freq">Freq</string>
+    <string name="b6_gain">Gain</string>
+    <string name="b6_q">Q</string>
+    <string name="b6_hz">Hz</string>
+    <string name="b6_khz">kHz</string>
+    <string name="b6_db">dB</string>
+    <string name="b6_add">+ Band</string>
+    <string name="b6_remove">Remove band</string>
+    <string name="b6_imp_file">Import file</string>
+    <string name="b6_imp_paste">Paste AutoEq</string>
+    <string name="b6_imp_hint">AutoEq: copy the ParametricEQ text and tap Paste, or pick the .txt file.</string>
+    <string name="b6_imp_ok">Imported %1$d filters, preamp %2$.1f dB</string>
+    <string name="b6_imp_none">No supported filters found</string>
+    <string name="b6_imp_skip">%1$d unsupported filters skipped</string>
+    <string name="b6_imp_cap">Only the first 16 filters were used</string>
+    <string name="b6_unsupported">This phone accepts only the 10 band engine, so the curve is approximated.</string>
+</resources>
