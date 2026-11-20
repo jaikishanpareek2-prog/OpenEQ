@@ -23,6 +23,21 @@ class PlayerService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    private val artBusy = HashSet<Long>()
+
+    private fun artFor(s: Song?): android.graphics.Bitmap? {
+        if (s == null) return null
+        val hit = Art.cached(s.id, 512)
+        if (hit != null) return hit
+        if (artBusy.add(s.id)) {
+            Thread {
+                val b = Art.load(applicationContext, s.id, 512)
+                if (b != null) android.os.Handler(android.os.Looper.getMainLooper()).post { refresh() }
+            }.start()
+        }
+        return null
+    }
+
     override fun onCreate() {
         super.onCreate()
         running = true
@@ -79,11 +94,13 @@ class PlayerService : Service() {
 
     private fun build(): Notification {
         val s = Player.current
+        val bmp = artFor(s)
         session.setMetadata(
             MediaMetadata.Builder()
                 .putString(MediaMetadata.METADATA_KEY_TITLE, s?.title ?: "OpenEQ")
                 .putString(MediaMetadata.METADATA_KEY_ARTIST, s?.artist ?: "")
                 .putLong(MediaMetadata.METADATA_KEY_DURATION, Player.duration.toLong())
+                .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bmp)
                 .build()
         )
         val st = if (Player.playing) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED
@@ -102,6 +119,7 @@ class PlayerService : Service() {
             .setContentTitle(s?.title ?: "OpenEQ")
             .setContentText(s?.artist ?: "")
             .setContentIntent(open)
+            .setLargeIcon(bmp)
             .setOngoing(Player.playing)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
             .addAction(act(android.R.drawable.ic_media_previous, "Previous", "prev"))

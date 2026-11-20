@@ -52,6 +52,7 @@ object EqEngine {
         if (ready) return
         ready = true
         ctx = c.applicationContext
+        OutputPresets.start(ctx)
         val p = ctx.getSharedPreferences("openeq", Context.MODE_PRIVATE)
         enabled = p.getBoolean("on", false)
         preamp = p.getFloat("pre", 0f)
@@ -106,14 +107,16 @@ object EqEngine {
 
     fun setGain(i: Int, v: Float) {
         gains[i] = v
-        if (BUILTIN.containsKey(preset)) preset = "My set"
+        if (BUILTIN.containsKey(preset)) preset = OutputPresets.editName()
         userPresets[preset] = gains.toList()
+        OutputPresets.keep()
         applyAll(); save()
     }
 
     fun select(name: String) {
         val g = BUILTIN[name] ?: userPresets[name] ?: return
         preset = name
+        OutputPresets.keep()
         g.forEachIndexed { i, v -> gains[i] = v }
         applyAll(); save()
     }
@@ -123,6 +126,7 @@ object EqEngine {
         while (userPresets.containsKey("My set $n")) n++
         preset = "My set $n"
         userPresets[preset] = gains.toList()
+        OutputPresets.keep()
         save()
     }
 

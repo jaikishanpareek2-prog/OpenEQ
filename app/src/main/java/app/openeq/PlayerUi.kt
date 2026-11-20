@@ -1,10 +1,8 @@
 package app.openeq
 
 import android.Manifest
-import android.content.ContentUris
 import android.content.pm.PackageManager
 import android.os.Build
-import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -107,6 +105,7 @@ fun SongRow(s: Song, current: Boolean, onPlay: () -> Unit) {
             .clickable { onPlay() }.padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        ArtThumb(s.id, 44)
         Column(Modifier.weight(1f)) {
             Text(s.title, color = if (current) C_GREEN else C_TXT, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(s.artist, color = C_SUB, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -128,17 +127,10 @@ fun SongRow(s: Song, current: Boolean, onPlay: () -> Unit) {
 fun NowPlaying(modifier: Modifier, onClose: () -> Unit) {
     val ctx = LocalContext.current
     val id = Player.current?.id
-    var art by remember(id) { mutableStateOf<ImageBitmap?>(null) }
+    var art by remember(id) { mutableStateOf<ImageBitmap?>(id?.let { Art.cached(it, 600)?.asImageBitmap() }) }
     LaunchedEffect(id) {
-        art = withContext(Dispatchers.IO) {
-            try {
-                if (Build.VERSION.SDK_INT >= 29 && id != null) {
-                    val u = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-                    ctx.contentResolver.loadThumbnail(u, android.util.Size(600, 600), null).asImageBitmap()
-                } else null
-            } catch (_: Throwable) {
-                null
-            }
+        if (art == null && id != null) {
+            art = withContext(Dispatchers.IO) { Art.load(ctx, id, 600)?.asImageBitmap() }
         }
     }
     val rec = Manifest.permission.RECORD_AUDIO
@@ -250,11 +242,20 @@ fun PlayerTab(modifier: Modifier) {
                 }
             }
             Column(Modifier.fillMaxWidth()) {
-                Text(
-                    (Player.current?.title ?: "Nothing playing") + "  ›", color = C_TXT, fontWeight = FontWeight.Bold,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.clickable { full = true }
-                )
-                Text(Player.current?.artist ?: "", color = C_SUB, fontSize = 12.sp, maxLines = 1)
+                Row(
+                    Modifier.fillMaxWidth().clickable { full = true },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val cur = Player.current
+                    if (cur != null) ArtThumb(cur.id, 48)
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            (cur?.title ?: "Nothing playing") + "  ›", color = C_TXT, fontWeight = FontWeight.Bold,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis
+                        )
+                        Text(cur?.artist ?: "", color = C_SUB, fontSize = 12.sp, maxLines = 1)
+                    }
+                }
                 SeekBar()
                 TransportRow()
             }

@@ -234,6 +234,8 @@ fun EqTab(modifier: Modifier, onStart: () -> Unit) {
                 Text(if (EqEngine.enabled) "ON" else "OFF", color = TXT, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(12.dp))
+            OutputPill()
+            Spacer(Modifier.width(8.dp))
             var open by remember { mutableStateOf(false) }
             Box(Modifier.weight(1f)) {
                 Box(
