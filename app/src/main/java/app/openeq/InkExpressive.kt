@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonColors
 import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -26,7 +27,7 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun inkToggleColors(): ToggleButtonColors = ToggleButtonDefaults.toggleButtonColors(
+private fun inkToggleColors(): ToggleButtonColors = ToggleButtonDefaults.colors(
     containerColor = Ink.Surface,
     contentColor = Ink.Text,
     checkedContainerColor = Ink.Accent,
@@ -50,7 +51,6 @@ fun InkConnectedTabs(labels: List<String>, selected: Int, modifier: Modifier = M
                 modifier = Modifier.weight(1f).height(48.dp).semantics { role = Role.Tab },
                 shapes = shapes,
                 colors = inkToggleColors(),
-                elevation = null,
                 border = BorderStroke(1.dp, if (on) Ink.Accent else Ink.Track),
                 contentPadding = PaddingValues(horizontal = 4.dp)
             ) {
@@ -67,13 +67,12 @@ fun InkToggle(text: String, on: Boolean, modifier: Modifier = Modifier, onClick:
         checked = on,
         onCheckedChange = { onClick() },
         modifier = modifier.height(48.dp),
-        shapes = ToggleButtonDefaults.shapes(
+        shapes = ToggleButtonShapes(
             shape = RoundedCornerShape(24.dp),
             pressedShape = RoundedCornerShape(12.dp),
             checkedShape = RoundedCornerShape(24.dp)
         ),
         colors = inkToggleColors(),
-        elevation = null,
         border = BorderStroke(1.dp, if (on) Ink.Accent else Ink.Track),
         contentPadding = PaddingValues(horizontal = 4.dp)
     ) {
@@ -88,13 +87,12 @@ fun InkOnButton(on: Boolean, onClick: () -> Unit) {
         checked = on,
         onCheckedChange = { onClick() },
         modifier = Modifier.size(52.dp),
-        shapes = ToggleButtonDefaults.shapes(
+        shapes = ToggleButtonShapes(
             shape = CircleShape,
             pressedShape = RoundedCornerShape(16.dp),
             checkedShape = CircleShape
         ),
         colors = inkToggleColors(),
-        elevation = null,
         border = BorderStroke(1.dp, if (on) Ink.Accent else Ink.Track),
         contentPadding = PaddingValues(0.dp)
     ) {
@@ -109,18 +107,17 @@ fun InkPresetButton(text: String, open: Boolean, modifier: Modifier = Modifier, 
         checked = open,
         onCheckedChange = onToggle,
         modifier = modifier.height(52.dp),
-        shapes = ToggleButtonDefaults.shapes(
+        shapes = ToggleButtonShapes(
             shape = RoundedCornerShape(26.dp),
             pressedShape = RoundedCornerShape(14.dp),
             checkedShape = RoundedCornerShape(26.dp)
         ),
-        colors = ToggleButtonDefaults.toggleButtonColors(
+        colors = ToggleButtonDefaults.colors(
             containerColor = Ink.Surface,
             contentColor = Ink.Text,
             checkedContainerColor = Ink.AccentSoft,
             checkedContentColor = Ink.Text
         ),
-        elevation = null,
         border = BorderStroke(1.dp, Ink.AccentSoft),
         contentPadding = PaddingValues(horizontal = 12.dp)
     ) {
