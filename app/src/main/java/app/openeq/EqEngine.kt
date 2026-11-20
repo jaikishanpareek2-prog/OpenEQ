@@ -65,7 +65,7 @@ object EqEngine {
 
     fun toggle() { enabled = !enabled; applyAll(); save() }
 
-    fun setPreamp(v: Float) { preamp = v; applyAll(); save() }
+    fun updatePreamp(v: Float) { preamp = v; applyAll(); save() }
 
     fun setGain(i: Int, v: Float) {
         gains[i] = v

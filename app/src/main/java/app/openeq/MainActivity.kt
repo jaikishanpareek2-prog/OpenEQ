@@ -141,7 +141,7 @@ fun EqScreen(onStart: () -> Unit) {
                     Modifier.width(70.dp).fillMaxHeight().clip(RoundedCornerShape(28.dp))
                         .background(PANEL).padding(vertical = 6.dp)
                 ) {
-                    BandCol("Preamp", EqEngine.preamp, 70) { EqEngine.setPreamp(it) }
+                    BandCol("Preamp", EqEngine.preamp, 70) { EqEngine.updatePreamp(it) }
                 }
                 Spacer(Modifier.width(6.dp))
                 EqEngine.LABELS.forEachIndexed { i, l ->
