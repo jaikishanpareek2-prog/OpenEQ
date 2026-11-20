@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 cd ~/openeq
 R=jaikishanpareek2-prog/OpenEQ
-read -s -p "GitHub token: " T; echo
+T=$(cat ~/.openeq_token)
 A="Authorization: Bearer $T"
 git add -A; git commit -q -m "${1:-update}" 2>/dev/null
 git push -q https://jaikishanpareek2-prog:$T@github.com/$R.git main || exit 1
