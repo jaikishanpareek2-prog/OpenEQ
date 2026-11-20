@@ -129,7 +129,7 @@ object Player {
                 EqEngine.attach(p.audioSessionId)
                 onChange?.invoke()
             }
-            m.setOnCompletionListener { next() }
+            m.setOnCompletionListener { PlayMode.onDone() }
             m.setOnErrorListener { _, _, _ -> playing = false; onChange?.invoke(); true }
             m.prepareAsync()
         } catch (_: Throwable) {
@@ -162,7 +162,9 @@ object Player {
 
     fun toggle() { if (playing) pause() else resume() }
 
-    fun next() { if (queue.isNotEmpty()) play((index + 1) % queue.size) }
+    fun sessionId(): Int = try { mp?.audioSessionId ?: 0 } catch (_: Throwable) { 0 }
+
+    fun next() { if (queue.isNotEmpty()) play(PlayMode.pickNext()) }
 
     fun prev() {
         if (queue.isEmpty()) return
