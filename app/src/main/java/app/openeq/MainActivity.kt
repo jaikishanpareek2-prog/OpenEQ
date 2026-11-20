@@ -2,6 +2,7 @@ package app.openeq
 
 import android.Manifest
 import android.content.Intent
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -14,6 +15,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -52,10 +55,12 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import kotlin.math.abs
 
 private val BG = Color(0xFF121C2B)
 private val PANEL = Color(0xFF00222A)
@@ -131,73 +136,181 @@ fun BandCol(label: String, value: Float, width: Int, onChange: (Float) -> Unit) 
 }
 
 @Composable
+fun Knob(label: String, text: String, t: Float, onT: (Float) -> Unit) {
+    val latestT = rememberUpdatedState(t)
+    val latest = rememberUpdatedState(onT)
+    Column(Modifier.width(92.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Canvas(
+            Modifier.size(76.dp).pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    down.consume()
+                    var cur = latestT.value
+                    var lastY = down.position.y
+                    do {
+                        val ev = awaitPointerEvent()
+                        val p = ev.changes.first()
+                        if (p.pressed) {
+                            cur = (cur + (lastY - p.position.y) / 300.dp.toPx()).coerceIn(0f, 1f)
+                            lastY = p.position.y
+                            latest.value(cur)
+                            p.consume()
+                        }
+                    } while (ev.changes.any { it.pressed })
+                }
+            }
+        ) {
+            val sw = 7.dp.toPx()
+            val tl = Offset(sw, sw)
+            val sz = Size(size.width - 2 * sw, size.height - 2 * sw)
+            drawCircle(PANEL)
+            drawArc(TRACK, 135f, 270f, false, tl, sz, style = Stroke(sw, cap = StrokeCap.Round))
+            drawArc(GREEN, 135f, 270f * t.coerceIn(0f, 1f), false, tl, sz, style = Stroke(sw, cap = StrokeCap.Round))
+        }
+        Text(label, color = TXT, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(text, color = TXT, fontSize = 12.sp)
+    }
+}
+
+@Composable
+fun PKnob(label: String, v: Float, a: Float, b: Float, unit: String, dec: Int, onV: (Float) -> Unit) {
+    Knob(label, "%.${dec}f%s".format(v, unit), (v - a) / (b - a)) { t -> onV(a + t * (b - a)) }
+}
+
+@Composable
+fun Pill(text: String, on: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier.height(48.dp).clip(RoundedCornerShape(24.dp))
+            .background(if (on) TEAL else PANEL)
+            .border(1.dp, TEAL, RoundedCornerShape(24.dp))
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text, color = TXT, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+fun EqTab(modifier: Modifier, onStart: () -> Unit) {
+    Column(modifier) {
+        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
+            Box(
+                Modifier.width(70.dp).fillMaxHeight().clip(RoundedCornerShape(28.dp))
+                    .background(PANEL).padding(vertical = 6.dp)
+            ) {
+                BandCol("Preamp", EqEngine.preamp, 70) { EqEngine.updatePreamp(it) }
+            }
+            Spacer(Modifier.width(6.dp))
+            EqEngine.LABELS.forEachIndexed { i, l ->
+                BandCol(l, EqEngine.gains[i], 54) { EqEngine.setGain(i, it) }
+            }
+        }
+        Canvas(
+            Modifier.padding(vertical = 10.dp).fillMaxWidth().height(72.dp)
+                .clip(RoundedCornerShape(16.dp)).background(PANEL)
+        ) {
+            val w = size.width
+            val h = size.height
+            fun yy(v: Float) = h / 2 - v / 12f * (h / 2 - 8.dp.toPx())
+            fun xx(i: Int) = w * i / 9f
+            drawLine(TRACK, Offset(0f, h / 2), Offset(w, h / 2), 1.dp.toPx())
+            val path = Path()
+            path.moveTo(xx(0), yy(EqEngine.eff(0)))
+            for (i in 1 until 10) {
+                val mx = (xx(i - 1) + xx(i)) / 2
+                path.cubicTo(mx, yy(EqEngine.eff(i - 1)), mx, yy(EqEngine.eff(i)), xx(i), yy(EqEngine.eff(i)))
+            }
+            drawPath(path, GREEN, style = Stroke(3.dp.toPx(), cap = StrokeCap.Round))
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(52.dp).clip(CircleShape)
+                    .background(if (EqEngine.enabled) TEAL else PANEL)
+                    .border(1.dp, TEAL, CircleShape)
+                    .clickable { EqEngine.toggle(); if (EqEngine.enabled) onStart() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(if (EqEngine.enabled) "ON" else "OFF", color = TXT, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(12.dp))
+            var open by remember { mutableStateOf(false) }
+            Box(Modifier.weight(1f)) {
+                Box(
+                    Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp))
+                        .border(1.dp, TEAL, RoundedCornerShape(26.dp))
+                        .clickable { open = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(EqEngine.preset, color = TXT, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+                DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                    EqEngine.names().forEach { n ->
+                        DropdownMenuItem(text = { Text(n) }, onClick = { EqEngine.select(n); open = false })
+                    }
+                    DropdownMenuItem(text = { Text("+ New preset") }, onClick = { EqEngine.newPreset(); open = false })
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            PKnob("Bass", EqEngine.bass, -100f, 100f, "%", 0) { EqEngine.bass = Math.round(it).toFloat(); EqEngine.changed() }
+            PKnob("Treble", EqEngine.treble, -100f, 100f, "%", 0) { EqEngine.treble = Math.round(it).toFloat(); EqEngine.changed() }
+        }
+    }
+}
+
+@Composable
+fun DynTab(modifier: Modifier) {
+    val ctx = LocalContext.current
+    val am = remember { ctx.getSystemService(AudioManager::class.java) }
+    val vmax = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC).toFloat()
+    var vol by remember { mutableStateOf(am.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat()) }
+    Column(modifier.verticalScroll(rememberScrollState())) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Pill("Limiter " + if (EqEngine.limiterOn) "ON" else "OFF", EqEngine.limiterOn, Modifier.weight(1f)) {
+                EqEngine.limiterOn = !EqEngine.limiterOn; EqEngine.changed()
+            }
+            Pill("Compressor " + if (EqEngine.compOn) "ON" else "OFF", EqEngine.compOn, Modifier.weight(1f)) {
+                EqEngine.compOn = !EqEngine.compOn; EqEngine.changed()
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            PKnob("Attack", EqEngine.cAttack, 1f, 200f, " ms", 0) { EqEngine.cAttack = Math.round(it).toFloat(); EqEngine.changed() }
+            PKnob("Release", EqEngine.cRelease, 10f, 1000f, " ms", 0) { EqEngine.cRelease = Math.round(it).toFloat(); EqEngine.changed() }
+            PKnob("Ratio", EqEngine.cRatio, 1f, 20f, ":1", 1) { EqEngine.cRatio = Math.round(it * 10f) / 10f; EqEngine.changed() }
+        }
+        Spacer(Modifier.height(16.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            PKnob("Threshold", EqEngine.cThresh, -60f, 0f, " dB", 0) { EqEngine.cThresh = Math.round(it).toFloat(); EqEngine.changed() }
+            PKnob("Gain", EqEngine.cGain, 0f, 12f, " dB", 1) { EqEngine.cGain = Math.round(it * 10f) / 10f; EqEngine.changed() }
+            PKnob("Balance", EqEngine.balance, -1f, 1f, "", 2) {
+                EqEngine.balance = if (abs(it) < 0.05f) 0f else Math.round(it * 100f) / 100f
+                EqEngine.changed()
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            Knob("Volume", "${(vol / vmax * 100).toInt()}%", vol / vmax) { t ->
+                val n = Math.round(t * vmax)
+                vol = n.toFloat()
+                am.setStreamVolume(AudioManager.STREAM_MUSIC, n, 0)
+            }
+        }
+    }
+}
+
+@Composable
 fun EqScreen(onStart: () -> Unit) {
+    var tab by remember { mutableStateOf(0) }
     MaterialTheme(colorScheme = darkColorScheme()) {
         Column(
             Modifier.fillMaxSize().background(BG).statusBarsPadding().navigationBarsPadding().padding(12.dp)
         ) {
-            Row(Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
-                Box(
-                    Modifier.width(70.dp).fillMaxHeight().clip(RoundedCornerShape(28.dp))
-                        .background(PANEL).padding(vertical = 6.dp)
-                ) {
-                    BandCol("Preamp", EqEngine.preamp, 70) { EqEngine.updatePreamp(it) }
-                }
-                Spacer(Modifier.width(6.dp))
-                EqEngine.LABELS.forEachIndexed { i, l ->
-                    BandCol(l, EqEngine.gains[i], 54) { EqEngine.setGain(i, it) }
-                }
+            if (tab == 0) EqTab(Modifier.weight(1f), onStart) else DynTab(Modifier.weight(1f))
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Pill("Equalizer", tab == 0, Modifier.weight(1f)) { tab = 0 }
+                Pill("Dynamics", tab == 1, Modifier.weight(1f)) { tab = 1 }
             }
-            Canvas(
-                Modifier.padding(vertical = 10.dp).fillMaxWidth().height(72.dp)
-                    .clip(RoundedCornerShape(16.dp)).background(PANEL)
-            ) {
-                val w = size.width
-                val h = size.height
-                fun yy(v: Float) = h / 2 - v / 12f * (h / 2 - 8.dp.toPx())
-                fun xx(i: Int) = w * i / (EqEngine.gains.size - 1)
-                drawLine(TRACK, Offset(0f, h / 2), Offset(w, h / 2), 1.dp.toPx())
-                val path = Path()
-                path.moveTo(xx(0), yy(EqEngine.gains[0]))
-                for (i in 1 until EqEngine.gains.size) {
-                    val mx = (xx(i - 1) + xx(i)) / 2
-                    path.cubicTo(mx, yy(EqEngine.gains[i - 1]), mx, yy(EqEngine.gains[i]), xx(i), yy(EqEngine.gains[i]))
-                }
-                drawPath(path, GREEN, style = Stroke(3.dp.toPx(), cap = StrokeCap.Round))
-            }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier.size(52.dp).clip(CircleShape)
-                        .background(if (EqEngine.enabled) TEAL else PANEL)
-                        .border(1.dp, TEAL, CircleShape)
-                        .clickable { EqEngine.toggle(); if (EqEngine.enabled) onStart() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(if (EqEngine.enabled) "ON" else "OFF", color = TXT, fontWeight = FontWeight.Bold)
-                }
-                Spacer(Modifier.width(12.dp))
-                var open by remember { mutableStateOf(false) }
-                Box(Modifier.weight(1f)) {
-                    Box(
-                        Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp))
-                            .border(1.dp, TEAL, RoundedCornerShape(26.dp))
-                            .clickable { open = true },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(EqEngine.preset, color = TXT, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    }
-                    DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                        EqEngine.names().forEach { n ->
-                            DropdownMenuItem(text = { Text(n) }, onClick = { EqEngine.select(n); open = false })
-                        }
-                        DropdownMenuItem(text = { Text("+ New preset") }, onClick = { EqEngine.newPreset(); open = false })
-                    }
-                }
-            }
-            Text(
-                "Turn ON, then play music. Works with apps that share their audio session.",
-                color = TRACK, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp)
-            )
         }
     }
 }
