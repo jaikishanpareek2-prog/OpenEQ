@@ -1,6 +1,12 @@
 package app.openeq
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -59,6 +65,12 @@ fun InkPill(text: String, on: Boolean, modifier: Modifier = Modifier, onClick: (
 @Composable
 fun InkSlider(value: Float, min: Float, max: Float, onChange: (Float) -> Unit, modifier: Modifier = Modifier) {
     val latest = rememberUpdatedState(onChange)
+    var pressed by remember { mutableStateOf(false) }
+    val press by animateFloatAsState(
+        if (pressed) 1f else 0f,
+        spring(dampingRatio = 0.55f, stiffness = 500f),
+        label = "inkSliderPress"
+    )
     Canvas(
         modifier.pointerInput(Unit) {
             awaitEachGesture {
@@ -69,6 +81,7 @@ fun InkSlider(value: Float, min: Float, max: Float, onChange: (Float) -> Unit, m
                 }
                 val down = awaitFirstDown()
                 down.consume()
+                pressed = true
                 latest.value(fromY(down.position.y))
                 do {
                     val ev = awaitPointerEvent()
@@ -78,20 +91,37 @@ fun InkSlider(value: Float, min: Float, max: Float, onChange: (Float) -> Unit, m
                         p.consume()
                     }
                 } while (ev.changes.any { it.pressed })
+                pressed = false
             }
         }
     ) {
         val pad = 30.dp.toPx()
         val cx = size.width / 2
         fun y(v: Float) = pad + (max - v) / (max - min) * (size.height - 2 * pad)
-        drawLine(Ink.Track, Offset(cx, 0f), Offset(cx, size.height), 4.dp.toPx())
-        drawLine(Ink.Accent, Offset(cx, y(0f)), Offset(cx, y(value)), 5.dp.toPx(), StrokeCap.Round)
-        val hw = 28.dp.toPx()
-        val hh = 44.dp.toPx()
-        val tl = Offset(cx - hw / 2, y(value) - hh / 2)
-        drawRoundRect(Ink.SurfaceHigh, tl, Size(hw, hh), CornerRadius(hw / 2))
-        drawRoundRect(Ink.Accent, tl, Size(hw, hh), CornerRadius(hw / 2), style = Stroke(2.dp.toPx()))
-        drawLine(Ink.Accent, Offset(cx - 7.dp.toPx(), y(value)), Offset(cx + 7.dp.toPx(), y(value)), 3.dp.toPx(), StrokeCap.Round)
+        val tw = (14f + 4f * press).dp.toPx()
+        val x0 = cx - tw / 2
+        val r = CornerRadius(tw / 2)
+        val hh = (6f - 3f * press).dp.toPx()
+        val hw = (34f + 6f * press).dp.toPx()
+        val half = hh / 2 + 5.dp.toPx()
+        val yv = y(value)
+        val y0 = y(0f)
+        val topEnd = (yv - half).coerceAtLeast(0f)
+        if (topEnd > 0f) drawRoundRect(Ink.Track, Offset(x0, 0f), Size(tw, topEnd), r)
+        val botStart = (yv + half).coerceAtMost(size.height)
+        if (botStart < size.height) drawRoundRect(Ink.Track, Offset(x0, botStart), Size(tw, size.height - botStart), r)
+        if (value > 0f) {
+            val s = yv + half
+            if (y0 > s) drawRoundRect(Ink.Accent, Offset(x0, s), Size(tw, y0 - s), r)
+        } else if (value < 0f) {
+            val e = yv - half
+            if (e > y0) drawRoundRect(Ink.Accent, Offset(x0, y0), Size(tw, e - y0), r)
+        }
+        val tick = 5.dp.toPx()
+        val tg = 2.dp.toPx()
+        drawLine(Ink.TextDim, Offset(x0 - tg - tick, y0), Offset(x0 - tg, y0), 2.dp.toPx(), StrokeCap.Round)
+        drawLine(Ink.TextDim, Offset(x0 + tw + tg, y0), Offset(x0 + tw + tg + tick, y0), 2.dp.toPx(), StrokeCap.Round)
+        drawRoundRect(Ink.Accent, Offset(cx - hw / 2, yv - hh / 2), Size(hw, hh), CornerRadius(hh / 2))
     }
 }
 

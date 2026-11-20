@@ -1,6 +1,10 @@
 package app.openeq
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,12 +51,19 @@ import androidx.compose.ui.unit.sp
 fun InkKnob(label: String, text: String, t: Float, onT: (Float) -> Unit) {
     val latestT = rememberUpdatedState(t)
     val latest = rememberUpdatedState(onT)
+    var pressed by remember { mutableStateOf(false) }
+    val press by animateFloatAsState(
+        if (pressed) 1f else 0f,
+        spring(dampingRatio = 0.55f, stiffness = 500f),
+        label = "inkKnobPress"
+    )
     Column(Modifier.width(92.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Canvas(
             Modifier.size(76.dp).pointerInput(Unit) {
                 awaitEachGesture {
                     val down = awaitFirstDown()
                     down.consume()
+                    pressed = true
                     var cur = latestT.value
                     var lastY = down.position.y
                     do {
@@ -65,15 +76,23 @@ fun InkKnob(label: String, text: String, t: Float, onT: (Float) -> Unit) {
                             p.consume()
                         }
                     } while (ev.changes.any { it.pressed })
+                    pressed = false
                 }
             }
         ) {
-            val sw = 7.dp.toPx()
-            val tl = Offset(sw, sw)
-            val sz = Size(size.width - 2 * sw, size.height - 2 * sw)
+            val sw = (9f + 3f * press).dp.toPx()
+            val inset = 12.dp.toPx()
+            val tl = Offset(inset, inset)
+            val sz = Size(size.width - 2 * inset, size.height - 2 * inset)
+            val tc = t.coerceIn(0f, 1f)
+            val rad = sz.width / 2
             drawCircle(Ink.Surface)
             drawArc(Ink.Track, 135f, 270f, false, tl, sz, style = Stroke(sw, cap = StrokeCap.Round))
-            drawArc(Ink.Accent, 135f, 270f * t.coerceIn(0f, 1f), false, tl, sz, style = Stroke(sw, cap = StrokeCap.Round))
+            drawArc(Ink.Accent, 135f, 270f * tc, false, tl, sz, style = Stroke(sw, cap = StrokeCap.Round))
+            drawCircle(Ink.SurfaceHigh, rad - sw / 2 - 4.dp.toPx())
+            val ang = Math.toRadians((135f + 270f * tc).toDouble())
+            val pos = Offset(center.x + rad * Math.cos(ang).toFloat(), center.y + rad * Math.sin(ang).toFloat())
+            drawCircle(Ink.OnAccent, sw * 0.25f, pos)
         }
         Text(label, color = Ink.Text, fontWeight = FontWeight.Bold, fontSize = 14.sp)
         Text(text, color = Ink.TextDim, fontSize = 12.sp)
@@ -102,12 +121,12 @@ fun EqTab(modifier: Modifier, onStart: () -> Unit) {
         }
         Canvas(
             Modifier.padding(vertical = 10.dp).fillMaxWidth().height(72.dp)
-                .clip(RoundedCornerShape(24.dp)).background(Ink.Surface)
+                .clip(RoundedCornerShape(32.dp)).background(Ink.Surface)
         ) {
             val w = size.width
             val h = size.height
             fun yy(v: Float) = h / 2 - v / 12f * (h / 2 - 8.dp.toPx())
-            fun xx(i: Int) = w * i / 9f
+            fun xx(i: Int) = 14.dp.toPx() + (w - 28.dp.toPx()) * i / 9f
             drawLine(Ink.Track, Offset(0f, h / 2), Offset(w, h / 2), 1.dp.toPx())
             val path = Path()
             path.moveTo(xx(0), yy(EqEngine.eff(0)))
@@ -115,7 +134,14 @@ fun EqTab(modifier: Modifier, onStart: () -> Unit) {
                 val mx = (xx(i - 1) + xx(i)) / 2
                 path.cubicTo(mx, yy(EqEngine.eff(i - 1)), mx, yy(EqEngine.eff(i)), xx(i), yy(EqEngine.eff(i)))
             }
-            drawPath(path, Ink.Accent, style = Stroke(3.dp.toPx(), cap = StrokeCap.Round))
+            val fill = Path()
+            fill.addPath(path)
+            fill.lineTo(xx(9), h)
+            fill.lineTo(xx(0), h)
+            fill.close()
+            drawPath(fill, Brush.verticalGradient(listOf(Ink.Accent.copy(alpha = 0.30f), Color.Transparent)))
+            drawPath(path, Ink.Accent, style = Stroke(4.dp.toPx(), cap = StrokeCap.Round))
+            for (i in 0 until 10) drawCircle(Ink.Accent, 4.5.dp.toPx(), Offset(xx(i), yy(EqEngine.eff(i))))
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             InkOnButton(EqEngine.enabled) { EqEngine.toggle(); if (EqEngine.enabled) onStart() }
